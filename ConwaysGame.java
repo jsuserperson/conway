@@ -7,8 +7,8 @@ public class ConwaysGame extends JPanel implements MouseListener, MouseMotionLis
     private JFrame frame;
     private boolean setup = false;
 
-    private int width = 10;
-    private int height = 10;
+    private int width;
+    private int height;
     boolean[][] grid = new boolean[height][width];
 
     JLabel inputLabel = new JLabel("width: ");
@@ -23,8 +23,10 @@ public class ConwaysGame extends JPanel implements MouseListener, MouseMotionLis
         frame.add(this);
         frame.setSize(300, 200);
         frame.setResizable(false);
+        frame.setFocusable(true);
         addMouseListener(this);
         addMouseMotionListener(this);
+        frame.addKeyListener(this);
         frame.setVisible(true);
         this.add(inputLabel);
         input.setPreferredSize(new Dimension(50, 20));
@@ -39,27 +41,54 @@ public class ConwaysGame extends JPanel implements MouseListener, MouseMotionLis
                     inputLabel.setText("height: ");
                 } else if (inputLabel.getText().equals("height: ")) {
                     height = inputInt;
-                    gameStart(width, height);
+                    gameSetup(width, height);
                 }
             }
         });
 
     }
 
-    public void gameStart(int width, int height) {
+    public void gameSetup(int width, int height) {
         grid = new boolean[height][width];
+        this.remove(inputLabel);
+        this.remove(input);
+        frame.setSize(width * 10 + 17, height * 10 + 40);
+        setup = true;
+        frame.setTitle("Conway's Game of Life - Hold SPACE to Progress!");
+    }
+
+    public void tick() {
+        boolean[][] newGrid = new boolean[height][width];
         for (int h = 0; h < height; h++) {
-            // String row = "";
-            for (int w = 0; w < width; w++) {
-                // row += grid[h][w] + " ";
-            }
-            // System.out.println(row);
-            this.remove(inputLabel);
-            this.remove(input);
-            frame.setSize(width * 10 + 17, height * 10 + 40);
-            setup = true;
-            frame.setTitle("Conway's Game of Life - Press ENTER to Start!");
+            System.arraycopy(grid[h], 0, newGrid[h], 0, height);
         }
+        for (int h = 0; h < height; h++) {
+            for (int w = 0; w < width; w++) {
+                int neighbors = 0;
+                if (h > 0 && w > 0 && grid[h - 1][w - 1]) {neighbors++;}
+                if (h > 0 && grid[h - 1][w]) {neighbors++;}
+                if (h > 0 && width > w + 1 && grid[h - 1][w + 1]) {neighbors++;}
+                if (width > w + 1 && grid[h][w + 1]) {neighbors++;}
+                if (height > h + 1 && width > w + 1 && grid[h + 1][w + 1]) {neighbors++;}
+                if (height > h + 1 && grid[h + 1][w]) {neighbors++;}
+                if (height > h + 1 && w > 0 && grid[h + 1][w - 1]) {neighbors++;}
+                if (w > 0 && grid[h][w - 1]) {neighbors++;}
+
+                if (grid[h][w]) {
+                    if (neighbors > 3 || neighbors < 2) {
+                        newGrid[h][w] = false;
+                    }
+                } else {
+                    if (neighbors == 3) {
+                        newGrid[h][w] = true;
+                    }
+                }
+            }
+        }
+        for (int h = 0; h < height; h++) {
+            System.arraycopy(newGrid[h], 0, grid[h], 0, height);
+        }
+        frame.repaint();
     }
 
     public void paintComponent(Graphics g) {
@@ -111,13 +140,14 @@ public class ConwaysGame extends JPanel implements MouseListener, MouseMotionLis
 
     public void mouseMoved(MouseEvent e) {}
 
-    public void keyTyped(KeyEvent e) {
-        if (setup && e.getKeyCode() == 10) {
+    public void keyTyped(KeyEvent e) {}
 
+    public void keyPressed(KeyEvent e) {
+        // System.out.println(e.getKeyCode());
+        if (setup && e.getKeyCode() == 32) {
+            tick();
         }
     }
-
-    public void keyPressed(KeyEvent e) {}
 
     public void keyReleased(KeyEvent e) {}
 }
